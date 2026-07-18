@@ -110,16 +110,20 @@ h1{font-family:"Snell Roundhand","Brush Script MT","Segoe Script",cursive;
 
 /* name entry screen */
 .name-screen{min-height:100dvh;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;gap:20px;padding:32px 24px;background:var(--ink);}
-.name-screen h2{font-family:"Snell Roundhand","Brush Script MT","Segoe Script",cursive;
-  font-size:clamp(28px,7vw,48px);color:var(--acid);font-weight:400;text-align:center;}
-.name-screen p{color:var(--well);font-size:13px;text-align:center;max-width:28ch;line-height:1.5;}
+  justify-content:center;gap:16px;padding:32px 24px;background:var(--ink);}
+.name-cd{font-size:clamp(64px,20vw,110px);font-weight:800;color:var(--acid);line-height:.9;
+  font-variant-numeric:tabular-nums;letter-spacing:-2px;}
+.name-cd-label{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--well);margin-top:4px;}
+.name-divider{width:48px;height:1px;background:rgba(215,161,193,.2);margin:8px 0;}
+.name-prompt{color:#f4e9ef;font-size:15px;font-weight:600;text-align:center;}
+.name-sub{color:var(--well);font-size:12px;text-align:center;max-width:26ch;line-height:1.5;margin-top:-6px;}
 .name-input{background:rgba(215,161,193,.08);border:1.5px solid rgba(215,161,193,.3);
   border-radius:12px;padding:16px 20px;font-size:18px;color:#f4e9ef;outline:none;
   width:100%;max-width:300px;text-align:center;font-family:inherit;
   -webkit-user-select:text;user-select:text;}
 .name-input::placeholder{color:rgba(215,161,193,.4);}
 .name-input:focus{border-color:var(--acid);}
+.name-btn-wrap{width:100%;max-width:300px;}
 
 /* waiting screen (lobby) */
 .waiting{position:absolute;inset:0;z-index:10;display:flex;flex-direction:column;
@@ -317,57 +321,77 @@ async function initPlayer(id){
   if(!pid){
     if(!open){ showClosed("Round's closed","You just missed the window — wait for the next draw."); return; }
 
-    // Show name entry screen and wait for submission
+    // Show name entry screen — countdown prominent, name below
     playerName = await new Promise(resolve => {
       document.body.innerHTML = `
         <div class="name-screen">
           <div class="eyebrow">Mega Luck · Group Draw</div>
-          <h2>What's your name?</h2>
-          <p>Enter your name before the draw closes</p>
+          <div class="name-cd" id="nameCd">—</div>
+          <div class="name-cd-label" id="nameCdLabel">Waiting for host</div>
+          <div class="name-divider"></div>
+          <div class="name-prompt">Enter your name to access your ticket</div>
+          <div class="name-sub">You need a name to scratch — enter it now while you wait</div>
           <input class="name-input" id="nameInput" type="text" maxlength="30"
             placeholder="Your name" autocomplete="off" autocorrect="off" spellcheck="false">
-          <button class="btn" id="nameBtn" style="width:100%;max-width:300px">Join the draw</button>
-          <div id="nameCountdown" style="font-size:13px;letter-spacing:.12em;color:rgba(215,161,193,.55);margin-top:4px"></div>
+          <div class="name-btn-wrap">
+            <button class="btn" id="nameBtn" style="width:100%;opacity:.4;cursor:not-allowed" disabled>Enter your name first</button>
+          </div>
         </div>`;
-      const inp = document.getElementById('nameInput');
-      const btn = document.getElementById('nameBtn');
-      const cdEl = document.getElementById('nameCountdown');
+
+      const inp  = document.getElementById('nameInput');
+      const btn  = document.getElementById('nameBtn');
+      const cdEl = document.getElementById('nameCd');
+      const lblEl = document.getElementById('nameCdLabel');
       inp.focus();
 
-      // sync countdown display with the room — works for both lobby (no timer yet) and counting
-      let cdLoop = null;
-      function updateCountdown(){
-        onValue(roomRef, snap => {
-          const r = snap.val(); if(!r) return;
-          if(r.status === 'lobby'){
-            cdEl.textContent = 'Waiting for host to start';
-            if(cdLoop){ clearInterval(cdLoop); cdLoop=null; }
-          } else if(r.status === 'counting' && r.drawAt){
-            if(!cdLoop){
-              cdLoop = setInterval(()=>{
-                const left = Math.max(0, r.drawAt - serverNow());
-                cdEl.textContent = 'Draw closes in ' + fmt(left);
-                if(left <= 0){
-                  clearInterval(cdLoop); cdLoop=null;
-                  cdEl.textContent = 'Draw closed — submit now!';
-                  cdEl.style.color='var(--acid)';
-                }
-              }, 200);
-            }
-          }
-        });
+      // Enable/disable button based on name input
+      function syncBtn(){
+        const hasName = inp.value.trim().length > 0;
+        btn.disabled = !hasName;
+        btn.style.opacity = hasName ? '1' : '.4';
+        btn.style.cursor  = hasName ? 'pointer' : 'not-allowed';
+        btn.textContent   = hasName ? 'Get my ticket' : 'Enter your name first';
       }
-      updateCountdown();
+      inp.addEventListener('input', syncBtn);
+
+      // Live countdown synced to Firebase
+      let cdLoop = null;
+      const unsub = onValue(roomRef, snap => {
+        const r = snap.val(); if(!r) return;
+        if(r.status === 'lobby'){
+          cdEl.textContent = '—';
+          lblEl.textContent = 'Waiting for host to start';
+          if(cdLoop){ clearInterval(cdLoop); cdLoop=null; }
+        } else if(r.status === 'counting' && r.drawAt){
+          if(!cdLoop){
+            cdLoop = setInterval(()=>{
+              const left = Math.max(0, r.drawAt - serverNow());
+              cdEl.textContent = fmt(left);
+              lblEl.textContent = left > 0 ? 'Draw closes in' : 'Draw closed';
+              if(left <= 0){
+                clearInterval(cdLoop); cdLoop=null;
+                cdEl.style.color = 'var(--well)';
+                // if they still haven't typed a name, tell them they can still submit
+                if(!inp.value.trim()){
+                  inp.placeholder = 'Last chance — enter your name';
+                  inp.style.borderColor = 'var(--acid)';
+                  inp.focus();
+                }
+              }
+            }, 200);
+          }
+        }
+      });
 
       function submit(){
         const v = inp.value.trim();
-        if(!v) { inp.style.borderColor='var(--magenta)'; inp.focus(); return; }
+        if(!v) return;
         btn.disabled = true; btn.textContent = 'Joining…';
         if(cdLoop){ clearInterval(cdLoop); cdLoop=null; }
         resolve(v);
       }
       btn.addEventListener('click', submit);
-      inp.addEventListener('keydown', e => { if(e.key==='Enter') submit(); });
+      inp.addEventListener('keydown', e => { if(e.key==='Enter' && !btn.disabled) submit(); });
     });
 
     const pRef = push(child(roomRef,'players'));
