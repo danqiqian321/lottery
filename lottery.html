@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#1a1016">
+<title>Mega Luck · Group Draw</title>
+
+<!-- ============================================================= -->
+<!--  QR library (classic script, runs before the deferred module) -->
+<!-- ============================================================= -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<style>
+  :root{
+    --magenta:#c3007a; --acid:#c0c456; --olive:#6f6a1c;
+    --gold:#e5a783; --well:#d7a1c1; --ink:#1a1016; --card:#241019;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;background:var(--ink);color:#f4e9ef;overscroll-behavior:none}
+  body{
+    font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
+    min-height:100dvh;display:flex;flex-direction:column;
+    padding:env(safe-area-inset-top) 14px env(safe-area-inset-bottom);
+    -webkit-user-select:none;user-select:none;
+  }
+  .wrap{flex:1;width:100%;max-width:960px;margin:0 auto;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:18px;padding:20px 0}
+
+  /* type */
+  .eyebrow{font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--gold);font-weight:700}
+  h1{font-family:"Snell Roundhand","Brush Script MT","Segoe Script",cursive;
+    font-weight:400;font-size:clamp(30px,7vw,54px);color:var(--acid);line-height:1;letter-spacing:.5px}
+  .sub{color:var(--well);font-size:14px;text-align:center;max-width:34ch;line-height:1.5}
+  .big囍{font-family:"PingFang SC","Hiragino Sans GB","Noto Sans CJK SC",serif}
+
+  /* host layout: controls beside the spectator card on wide screens */
+  .host{display:grid;grid-template-columns:1fr;gap:22px;width:100%;align-items:center}
+  @media(min-width:760px){.host{grid-template-columns:1.05fr .95fr}}
+
+  .panel{background:var(--card);border:1px solid rgba(215,161,193,.16);border-radius:16px;
+    padding:22px;display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center}
+
+  #qr{background:#fff;padding:12px;border-radius:12px;line-height:0}
+  #qr img,#qr canvas{display:block}
+
+  .count{font-size:64px;font-weight:800;color:var(--acid);line-height:.9;font-variant-numeric:tabular-nums}
+  .count-label{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--well)}
+
+  .timer{font-size:clamp(56px,16vw,110px);font-weight:800;color:var(--acid);line-height:.9;
+    font-variant-numeric:tabular-nums;letter-spacing:-2px}
+
+  button{font:700 13px/1 "Helvetica Neue",Helvetica,Arial,sans-serif;letter-spacing:.12em;
+    text-transform:uppercase;padding:15px 30px;border-radius:10px;border:none;cursor:pointer;
+    background:var(--magenta);color:#fff;transition:filter .15s,transform .05s}
+  button:hover{filter:brightness(1.12)} button:active{transform:translateY(1px)}
+  button:disabled{background:#4a2438;color:#8a6a7a;cursor:default;filter:none}
+  button.ghost{background:transparent;border:1px solid rgba(215,161,193,.28);color:var(--well)}
+
+  .pill{display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:999px;
+    background:rgba(192,196,86,.12);border:1px solid rgba(192,196,86,.3);
+    font-size:12px;letter-spacing:.06em;color:var(--acid)}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--acid);animation:pulse 1.4s infinite}
+  @keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
+
+  .winner{font-size:clamp(26px,6vw,44px);font-weight:800;color:var(--acid);text-align:center;line-height:1.1}
+  .link{font-size:11px;color:rgba(215,161,193,.55);word-break:break-all;max-width:30ch}
+
+  /* ---------------- scratch card ---------------- */
+  .sc-shell{position:relative;width:min(300px,86vw);aspect-ratio:3/2;border-radius:14px;overflow:hidden;
+    box-shadow:0 10px 30px rgba(0,0,0,.5);background:var(--well)}
+  .sc-result{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:6px;background:var(--well);padding:14px;text-align:center}
+  .sc-glyphs{font-family:"PingFang SC","Hiragino Sans GB","Noto Sans CJK SC",serif;
+    font-size:clamp(26px,9vw,42px);color:#ad0567;letter-spacing:2px;line-height:1}
+  .sc-tag{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+  .sc-tag.win{color:#0a7d2c} .sc-tag.lose{color:rgba(173,5,103,.7)}
+  .sc-foil{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+  .sc-locked{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:6px;background:rgba(20,8,14,.72);backdrop-filter:blur(2px);z-index:3}
+  .sc-locked .lk{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--well)}
+  .sc-hint{font-size:11px;color:var(--well);letter-spacing:.1em;margin-top:2px}
+
+  .hidden{display:none!important}
+  .center{text-align:center}
+  @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important}}
+</style>
+</head>
+<body>
+  <div class="wrap" id="root">
+    <div class="pill"><span class="dot"></span>Connecting…</div>
+  </div>
+
+<!-- ============================================================= -->
+<!--  CONFIG — paste your Firebase project's config here.          -->
+<!--  (Realtime Database.  Make sure databaseURL is present.)      -->
+<!-- ============================================================= -->
+
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyDTkSFSklW3j0aynK5OEAUS-kw0xQuSlII",
+  authDomain: "lottery-demo-8e00f.firebaseapp.com",
+  databaseURL: "https://lottery-demo-8e00f-default-rtdb.firebaseio.com",
+  projectId: "lottery-demo-8e00f",
+  storageBucket: "lottery-demo-8e00f.firebasestorage.app",
+  messagingSenderId: "6640982354",
+  appId: "1:6640982354:web:76599dc8b7739c8e60428b",
+  measurementId: "G-97TPD3TD9T"
+};
+
+
+  /* ---- knobs you might touch ---- */
+  window.CFG = {
+    WINDOW_MS: 30000,      // join window length (30s)
+    HOST_AUTOSCRATCH: true // big-screen card scratches itself at the draw. false = drag it live.
+  };
+</script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+import { getDatabase, ref, push, child, set, update, get, onValue, runTransaction, serverTimestamp }
+  from "https://www.gstatic.com/firebasejs/12.13.0/firebase-database.js";
+
+const root = document.getElementById('root');
+const { WINDOW_MS, HOST_AUTOSCRATCH } = window.CFG;
+
+/* ---- boot / config guard ---- */
+if (String(window.FIREBASE_CONFIG.apiKey).startsWith("PASTE")) {
+  root.innerHTML = `<div class="panel" style="max-width:460px">
+    <div class="eyebrow">Setup needed</div>
+    <p class="sub">Paste your Firebase config into the <b>CONFIG</b> block near the bottom of this
+    file, then reload. The setup steps are in the notes I sent alongside this file.</p></div>`;
+  throw new Error("Firebase not configured");
+}
+const app = initializeApp(window.FIREBASE_CONFIG);
+const db  = getDatabase(app);
+
+/* ---- clock sync: everyone counts down to the same real instant ---- */
+let clockOffset = 0;
+onValue(ref(db, ".info/serverTimeOffset"), s => clockOffset = s.val() || 0);
+const serverNow = () => Date.now() + clockOffset;
+
+/* ---- ticket token (fun, read-aloud-safe) ---- */
+function mint(){ const A='23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  let s=''; for(let i=0;i<6;i++) s+=A[(Math.random()*A.length)|0]; return s; }
+
+/* ---- authored near-miss for losers (never a 6) ---- */
+function loserHits(){
+  const r=Math.random();
+  if(r<.50) return 5;          // the cruel band — one short
+  if(r<.78) return 4;
+  if(r<.93) return 3;
+  return 2;
+}
+
+const params = new URLSearchParams(location.search);
+const roomId = params.get('room');
+roomId ? initPlayer(roomId) : initHost();
+
+/* ============================================================= */
+/*  SCRATCH CARD                                                 */
+/* ============================================================= */
+function ScratchCard({ win, locked=false }){
+  const shell = el('div','sc-shell');
+  const result = el('div','sc-result');
+  const glyphs = el('div','sc-glyphs');
+  const tag = el('div','sc-tag');
+  const HAP='\u559C', DBL='\u56CD';           // 喜 happiness · 囍 double happiness
+  if(win){ glyphs.textContent = DBL.repeat(3); tag.textContent='Grand prize'; tag.classList.add('win'); }
+  else   { glyphs.textContent = DBL.repeat(2)+HAP; tag.textContent='One short'; tag.classList.add('lose'); }
+  result.append(glyphs, tag);
+
+  const cv = el('canvas','sc-foil'); const R=2;
+  const lock = el('div','sc-locked');
+  lock.innerHTML = `<div class="big囍" style="font-size:34px;color:#e5a783">${DBL}</div><div class="lk">Sealed</div>`;
+  shell.append(result, cv, lock);
+  if(!locked) lock.classList.add('hidden');
+
+  let ctx, w, h, revealed=false, painted=false;
+  function paint(){
+    const rect=shell.getBoundingClientRect(); w=cv.width=rect.width*R; h=cv.height=rect.height*R;
+    ctx=cv.getContext('2d',{willReadFrequently:true});
+    const g=ctx.createLinearGradient(0,0,w,h);
+    g.addColorStop(0,'#d81a8e');g.addColorStop(.5,'#c3007a');g.addColorStop(1,'#b00069');
+    ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+    ctx.fillStyle='rgba(255,255,255,.12)'; ctx.font=`bold ${14*R}px Helvetica`;
+    ctx.textAlign='center';
+    for(let y=22*R;y<h;y+=30*R) for(let x=40*R;x<w;x+=90*R) ctx.fillText('SCRATCH',x,y);
+    painted=true;
+  }
+  function scratch(x,y,rad=22){
+    if(!painted||revealed) return;
+    ctx.globalCompositeOperation='destination-out';
+    ctx.beginPath(); ctx.arc(x*R,y*R,rad*R,0,7); ctx.fill();
+  }
+  function cleared(){
+    const d=ctx.getImageData(0,0,w,h).data; let gone=0,n=0;
+    for(let i=3;i<d.length;i+=4*40){ if(d[i]<20) gone++; n++; }
+    return gone/n;
+  }
+  function finish(){ revealed=true; cv.classList.add('hidden'); shell.dispatchEvent(new Event('revealed')); }
+
+  let down=false,last=null;
+  const pos=e=>{const r=shell.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}};
+  cv.addEventListener('pointerdown',e=>{if(cv.classList.contains('hidden'))return;down=true;last=pos(e);
+    scratch(last.x,last.y);cv.setPointerCapture(e.pointerId);e.preventDefault()});
+  cv.addEventListener('pointermove',e=>{if(!down)return;const p=pos(e);
+    const dx=p.x-last.x,dy=p.y-last.y,steps=Math.max(1,Math.hypot(dx,dy)/4|0);
+    for(let s=1;s<=steps;s++)scratch(last.x+dx*s/steps,last.y+dy*s/steps);last=p;e.preventDefault()});
+  const up=()=>{if(!down)return;down=false;if(cleared()>=.5)finish()};
+  cv.addEventListener('pointerup',up); cv.addEventListener('pointercancel',up);
+
+  return {
+    node:shell,
+    mount(){ requestAnimationFrame(paint); },
+    unlock(){ lock.classList.add('hidden'); },
+    onReveal(fn){ shell.addEventListener('revealed',fn); },
+    auto(){                                   // hands-free scratch, for the big screen
+      if(!painted) paint();
+      let step=0; const grid=[];
+      for(let gy=20;gy<shell.clientHeight;gy+=16) for(let gx=20;gx<shell.clientWidth;gx+=16) grid.push([gx,gy]);
+      for(let i=grid.length-1;i>0;i--){const j=Math.random()*i|0;[grid[i],grid[j]]=[grid[j],grid[i]]}
+      const t=setInterval(()=>{ for(let k=0;k<14&&step<grid.length;k++,step++)scratch(grid[step][0],grid[step][1]);
+        if(cleared()>=.62||step>=grid.length){clearInterval(t);finish();} },40);
+    }
+  };
+}
+
+/* ============================================================= */
+/*  HOST  (big screen / dealer)                                  */
+/* ============================================================= */
+async function initHost(){
+  const roomRef = push(ref(db,'rooms'));
+  const id = roomRef.key;
+  await set(roomRef,{ status:'lobby', startAt:null, drawAt:null, winnerId:null, createdAt:serverTimestamp() });
+
+  const joinUrl = location.origin + location.pathname + '?room=' + id;
+
+  root.innerHTML = `
+    <div class="host">
+      <div class="panel">
+        <div class="eyebrow">Mega Luck · Group Draw</div>
+        <h1>Scan to play</h1>
+        <div id="qr"></div>
+        <div class="link">${joinUrl}</div>
+        <div><span class="count" id="pcount">0</span><div class="count-label">in the room</div></div>
+        <div id="host-action"></div>
+      </div>
+      <div class="panel">
+        <div class="eyebrow" id="phase-label">Waiting for players</div>
+        <div id="host-stage" class="center"></div>
+      </div>
+    </div>`;
+
+  new QRCode(document.getElementById('qr'),{ text:joinUrl, width:220, height:220,
+    colorDark:'#1a1016', colorLight:'#ffffff' });
+
+  const pcount = document.getElementById('pcount');
+  const phaseLabel = document.getElementById('phase-label');
+  const stage = document.getElementById('host-stage');
+  const action = document.getElementById('host-action');
+
+  let room=null, orderedPlayers=[], drawTried=false, specCard=null, timerLoop=null;
+
+  const startBtn = mkBtn('Start the 30s draw', ()=>{
+    const now=serverNow(); update(roomRef,{ status:'counting', startAt:now, drawAt:now+WINDOW_MS });
+  });
+  action.append(startBtn);
+
+  onValue(child(roomRef,'players'), snap=>{
+    const players=snap.val()||{};
+    orderedPlayers=Object.entries(players)
+      .sort((a,b)=>(a[1].joinedAt||0)-(b[1].joinedAt||0)).map(([k])=>k);
+    pcount.textContent=orderedPlayers.length;
+    startBtn.disabled = orderedPlayers.length===0 && (!room||room.status==='lobby');
+  });
+
+  onValue(roomRef, snap=>{ room=snap.val(); renderHost(); });
+
+  function renderHost(){
+    if(!room) return;
+    if(room.status==='lobby'){
+      phaseLabel.textContent='Waiting for players';
+      stage.innerHTML=`<p class="sub">Point people at the QR. When the room looks full,
+        hit start and the 30-second window opens.</p>`;
+      startBtn.classList.remove('hidden');
+    }
+    if(room.status==='counting'){
+      startBtn.classList.add('hidden');
+      phaseLabel.textContent='Drawing in';
+      if(!stage.querySelector('.timer')) stage.innerHTML=`<div class="timer" id="t">0:30</div>
+        <p class="sub">Window closes at zero — latecomers wait for the next round.</p>`;
+      if(!timerLoop) timerLoop=setInterval(tickHost,200);
+    }
+    if(room.status==='drawn'){
+      if(timerLoop){clearInterval(timerLoop);timerLoop=null;}
+      phaseLabel.textContent='Result';
+      showHostResult();
+    }
+  }
+
+  function tickHost(){
+    if(!room||!room.drawAt) return;
+    const left=Math.max(0,room.drawAt-serverNow());
+    const t=document.getElementById('t'); if(t) t.textContent=fmt(left);
+    // HOST runs the draw, authoritatively, once, when the window closes.
+    if(left<=0 && !drawTried && room.status==='counting'){ drawTried=true; drawWinner(); }
+  }
+
+  function drawWinner(){
+    runTransaction(roomRef, r=>{
+      if(!r || r.status!=='counting' || r.winnerId) return r;   // idempotent guard
+      const players = r.players ? Object.keys(r.players) : [];
+      if(players.length){
+        players.sort((a,b)=>(r.players[a].joinedAt||0)-(r.players[b].joinedAt||0));
+        // ── PLACEHOLDER: 3rd to join wins (easy to eyeball). ───────────────
+        // Swap the next line for real luck:
+        //   const winner = players[Math.floor(Math.random()*players.length)];
+        const winner = players[Math.min(2, players.length-1)];
+        // ──────────────────────────────────────────────────────────────────
+        r.winnerId = winner;
+      } else {
+        r.winnerId = 'NONE';
+      }
+      r.status='drawn';
+      return r;
+    });
+  }
+
+  function showHostResult(){
+    const idx = orderedPlayers.indexOf(room.winnerId);
+    const who = room.winnerId==='NONE' || idx<0
+      ? 'No players joined in time'
+      : `Player&nbsp;#${idx+1} wins 🎉`;
+    stage.innerHTML=`<div class="winner">${who}</div>
+      <p class="sub">Their phone is uncovering the sixth double&nbsp;happiness right now.</p>
+      <div class="sc-mount"></div>`;
+    // spectator card: cosmetic, can't win — always a near-miss, honest
+    specCard = ScratchCard({ win:false });
+    stage.querySelector('.sc-mount').append(specCard.node);
+    specCard.mount();
+    if(HOST_AUTOSCRATCH){ setTimeout(()=>specCard.auto(), 600); }
+    else stage.insertAdjacentHTML('beforeend','<div class="sc-hint">drag to scratch</div>');
+    action.innerHTML='';
+    action.append(mkBtn('New round', ()=>location.reload()));
+  }
+}
+
+/* ============================================================= */
+/*  PLAYER  (phone)                                              */
+/* ============================================================= */
+async function initPlayer(id){
+  const roomRef = ref(db,'rooms/'+id);
+  const snap = await get(roomRef);
+  if(!snap.exists()){ return closed("Room not found", "Ask the host for a fresh QR code."); }
+
+  const first = snap.val();
+  const now = serverNow();
+  const windowOpen = first.status==='lobby' ||
+    (first.status==='counting' && (!first.drawAt || now < first.drawAt));
+
+  let pid = localStorage.getItem('mlhl_pid_'+id);
+  if(!pid){
+    if(!windowOpen) return closed("This round's closed", "You just missed the window — hang on for the next draw.");
+    const pRef = push(child(roomRef,'players'));
+    pid = pRef.key;
+    await set(pRef,{ joinedAt:serverTimestamp(), token:mint() });
+    localStorage.setItem('mlhl_pid_'+id, pid);
+  }
+  const me = pid;
+
+  root.innerHTML = `<div id="pstage" class="center" style="display:flex;flex-direction:column;
+    align-items:center;gap:16px"></div>`;
+  const stage = document.getElementById('pstage');
+
+  let room=null, card=null, dealt=false, loop=null;
+
+  onValue(roomRef, s=>{ room=s.val(); renderPlayer(); });
+  loop = setInterval(()=>{ if(room && room.status==='counting') paintTimer(); }, 200);
+
+  function renderPlayer(){
+    if(!room) return;
+    if(room.status==='lobby'){
+      stage.innerHTML = `<div class="eyebrow">You're in</div>
+        <h1>You're in.</h1>
+        <div class="pill"><span class="dot"></span>Waiting for the host to start</div>`;
+    }
+    else if(room.status==='counting'){
+      if(!stage.querySelector('.timer')){
+        stage.innerHTML = `<div class="eyebrow">Draw locks in</div>
+          <div class="timer" id="pt">0:30</div>
+          <p class="sub">Your ticket unlocks when the timer hits zero.</p>`;
+      }
+      paintTimer();
+    }
+    else if(room.status==='drawn' && !dealt){
+      dealt=true;
+      if(loop){clearInterval(loop);loop=null;}
+      dealCard();
+    }
+  }
+
+  function paintTimer(){
+    if(!room.drawAt) return;
+    const t=document.getElementById('pt');
+    if(t) t.textContent = fmt(Math.max(0, room.drawAt-serverNow()));
+  }
+
+  function dealCard(){
+    const iWon = room.winnerId === me;
+    stage.innerHTML = `<div class="eyebrow">${iWon?'Your lucky ticket':'Your ticket'}</div>
+      <div class="sc-mount"></div>
+      <div class="sc-hint">scratch to reveal</div>`;
+    card = ScratchCard({ win:iWon });
+    stage.querySelector('.sc-mount').append(card.node);
+    card.mount();
+    card.onReveal(()=>{
+      const hint=stage.querySelector('.sc-hint');
+      hint.textContent = iWon ? '🎉 You won the grand prize!' : 'One double happiness short — next time.';
+      hint.style.color = iWon ? 'var(--acid)' : 'var(--well)';
+      hint.style.fontWeight='800';hint.style.letterSpacing='.1em';
+    });
+  }
+}
+
+/* ============================================================= */
+/*  helpers                                                      */
+/* ============================================================= */
+function el(t,c){const e=document.createElement(t);if(c)e.className=c;return e;}
+function mkBtn(label,fn){const b=document.createElement('button');b.textContent=label;b.onclick=fn;return b;}
+function fmt(ms){const s=Math.ceil(ms/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+function closed(title,sub){
+  root.innerHTML=`<div class="panel" style="max-width:400px">
+    <div class="eyebrow">Round closed</div><h1>${title}</h1><p class="sub">${sub}</p></div>`;
+}
+</script>
+</body>
+</html>
