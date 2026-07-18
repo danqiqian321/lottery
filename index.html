@@ -213,7 +213,6 @@ async function initHost(){
 
   const startBtn = document.createElement('button');
   startBtn.className='btn'; startBtn.textContent='Start 30s draw';
-  startBtn.disabled=true;
   startBtn.onclick = ()=>{ const n=serverNow(); update(roomRef,{status:'counting',startAt:n,drawAt:n+WINDOW_MS}); };
   actionEl.append(startBtn);
 
@@ -221,7 +220,7 @@ async function initHost(){
     const pl = snap.val()||{};
     ordered = Object.entries(pl).sort((a,b)=>(a[1].joinedAt||0)-(b[1].joinedAt||0)).map(([k])=>k);
     pcount.textContent = ordered.length;
-    if(room&&room.status==='lobby') startBtn.disabled = ordered.length===0;
+    // start button always enabled — host decides when to begin
   });
 
   onValue(roomRef, snap=>{ room=snap.val(); renderHost(); });
@@ -497,10 +496,14 @@ async function initPlayer(id){
     const done=cells.filter(c=>c.done);
     const found=done.filter(c=>c.sym===HIT).length;
     const scratched=done.length;
+    // only light pips for cells already revealed
     [...pipsEl.children].forEach((p,i)=>p.classList.toggle('on',i<found));
     statusEl.classList.remove('result','lose');
-    if(scratched<TOTAL) statusEl.textContent=scratched+' of '+TOTAL+' scratched';
-    else if(found>=NEED){
+    if(scratched<TOTAL){
+      // still scratching — show count, never announce result yet
+      statusEl.textContent=scratched>0?(scratched+' of '+TOTAL+' scratched'):'Scratch to reveal';
+    } else if(found>=NEED){
+      // every cell revealed AND enough hits — show win
       statusEl.textContent='Grand prize unlocked';statusEl.classList.add('result');
       cardEl.classList.add('win');
       const np=document.getElementById('nameplate');np.innerHTML='';
@@ -509,6 +512,7 @@ async function initPlayer(id){
         s.textContent=t;np.append(s);
       });
     } else {
+      // every cell revealed, not enough hits
       statusEl.textContent=found+' double happiness · you needed '+NEED;
       statusEl.classList.add('result','lose');
     }
@@ -612,7 +616,12 @@ async function initPlayer(id){
   /* ── fit ── */
   const stageEl2=document.getElementById('stage'),fitEl=document.getElementById('fit');
   function fitTicket(){
-    const s=Math.min(stageEl2.clientWidth/CARD_W,stageEl2.clientHeight/CARD_H);
+    // measure the whole viewport minus the hud so the ticket never overflows on mobile
+    const hudEl=document.querySelector('.hud');
+    const hudH=hudEl?hudEl.offsetHeight:0;
+    const avW=window.innerWidth;
+    const avH=window.innerHeight-hudH;
+    const s=Math.min(avW/CARD_W, avH/CARD_H);
     fitEl.style.transform='scale('+s+')'; cacheRects();
   }
   addEventListener('resize',fitTicket);
