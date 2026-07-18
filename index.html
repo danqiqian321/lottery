@@ -242,15 +242,22 @@ async function initHost(){
     }
     if(room.status==='drawn'){
       if(loop){clearInterval(loop);loop=null;}
-      phaseEl.textContent='Winner drawn';
-      const idx = ordered.indexOf(room.winnerId);
-      const who = room.winnerId==='NONE'||idx<0 ? 'No one joined in time' : `Player #${idx+1} wins 🎉`;
-      stageEl.innerHTML=`<div class="winner-msg">${who}</div>
-        <p class="sub" style="margin-top:8px">Everyone's scratching their ticket now.</p>`;
+      phaseEl.textContent='Cards unlocked';
+      stageEl.innerHTML=`<div class="winner-msg" style="font-size:clamp(18px,4vw,28px);color:var(--well)">Everyone scratch now</div>
+        <p class="sub" style="margin-top:8px">${ordered.length} player${ordered.length===1?'':'s'} · winner hidden until you reveal</p>`;
       actionEl.innerHTML='';
-      const nb = document.createElement('button');
-      nb.className='btn'; nb.textContent='New round'; nb.onclick=()=>location.reload();
-      actionEl.append(nb);
+      const revBtn=document.createElement('button');
+      revBtn.className='btn';revBtn.textContent='Reveal winner';
+      revBtn.onclick=()=>{
+        const idx=ordered.indexOf(room.winnerId);
+        const who=room.winnerId==='NONE'||idx<0?'No one joined in time':`Player #${idx+1} wins 🎉`;
+        stageEl.innerHTML=`<div class="winner-msg">${who}</div>`;
+        actionEl.innerHTML='';
+        const nb=document.createElement('button');
+        nb.className='btn ghost';nb.textContent='New round';nb.onclick=()=>location.reload();
+        actionEl.append(nb);
+      };
+      actionEl.append(revBtn);
     }
   }
 
