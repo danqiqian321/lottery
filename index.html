@@ -327,14 +327,43 @@ async function initPlayer(id){
           <input class="name-input" id="nameInput" type="text" maxlength="30"
             placeholder="Your name" autocomplete="off" autocorrect="off" spellcheck="false">
           <button class="btn" id="nameBtn" style="width:100%;max-width:300px">Join the draw</button>
+          <div id="nameCountdown" style="font-size:13px;letter-spacing:.12em;color:rgba(215,161,193,.55);margin-top:4px"></div>
         </div>`;
       const inp = document.getElementById('nameInput');
       const btn = document.getElementById('nameBtn');
+      const cdEl = document.getElementById('nameCountdown');
       inp.focus();
+
+      // sync countdown display with the room — works for both lobby (no timer yet) and counting
+      let cdLoop = null;
+      function updateCountdown(){
+        onValue(roomRef, snap => {
+          const r = snap.val(); if(!r) return;
+          if(r.status === 'lobby'){
+            cdEl.textContent = 'Waiting for host to start';
+            if(cdLoop){ clearInterval(cdLoop); cdLoop=null; }
+          } else if(r.status === 'counting' && r.drawAt){
+            if(!cdLoop){
+              cdLoop = setInterval(()=>{
+                const left = Math.max(0, r.drawAt - serverNow());
+                cdEl.textContent = 'Draw closes in ' + fmt(left);
+                if(left <= 0){
+                  clearInterval(cdLoop); cdLoop=null;
+                  cdEl.textContent = 'Draw closed — submit now!';
+                  cdEl.style.color='var(--acid)';
+                }
+              }, 200);
+            }
+          }
+        });
+      }
+      updateCountdown();
+
       function submit(){
         const v = inp.value.trim();
         if(!v) { inp.style.borderColor='var(--magenta)'; inp.focus(); return; }
         btn.disabled = true; btn.textContent = 'Joining…';
+        if(cdLoop){ clearInterval(cdLoop); cdLoop=null; }
         resolve(v);
       }
       btn.addEventListener('click', submit);
