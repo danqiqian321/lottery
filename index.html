@@ -108,6 +108,19 @@ h1{font-family:"Snell Roundhand","Brush Script MT","Segoe Script",cursive;
   font-variant-numeric:tabular-nums;letter-spacing:-2px;}
 .ticket-locked .lk-label{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--well);}
 
+/* name entry screen */
+.name-screen{min-height:100dvh;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:20px;padding:32px 24px;background:var(--ink);}
+.name-screen h2{font-family:"Snell Roundhand","Brush Script MT","Segoe Script",cursive;
+  font-size:clamp(28px,7vw,48px);color:var(--acid);font-weight:400;text-align:center;}
+.name-screen p{color:var(--well);font-size:13px;text-align:center;max-width:28ch;line-height:1.5;}
+.name-input{background:rgba(215,161,193,.08);border:1.5px solid rgba(215,161,193,.3);
+  border-radius:12px;padding:16px 20px;font-size:18px;color:#f4e9ef;outline:none;
+  width:100%;max-width:300px;text-align:center;font-family:inherit;
+  -webkit-user-select:text;user-select:text;}
+.name-input::placeholder{color:rgba(215,161,193,.4);}
+.name-input:focus{border-color:var(--acid);}
+
 /* waiting screen (lobby) */
 .waiting{position:absolute;inset:0;z-index:10;display:flex;flex-direction:column;
   align-items:center;justify-content:center;gap:14px;
@@ -250,7 +263,9 @@ async function initHost(){
       revBtn.className='btn';revBtn.textContent='Reveal winner';
       revBtn.onclick=()=>{
         const idx=ordered.indexOf(room.winnerId);
-        const who=room.winnerId==='NONE'||idx<0?'No one joined in time':`Player #${idx+1} wins 🎉`;
+        const wSnap=room.players&&room.players[room.winnerId];
+        const wName=wSnap&&wSnap.name?wSnap.name:`Player #${idx+1}`;
+        const who=room.winnerId==='NONE'||idx<0?'No one joined in time':`${wName} wins 🎉`;
         stageEl.innerHTML=`<div class="winner-msg">${who}</div>`;
         actionEl.innerHTML='';
         const nb=document.createElement('button');
@@ -296,12 +311,41 @@ async function initPlayer(id){
   const open = first.status==='lobby' || (first.status==='counting' && (!first.drawAt||now<first.drawAt));
 
   let pid = (() => { try { return localStorage.getItem('mlhl_pid_'+id); } catch(e){ return null; } })();
+  let playerName = (() => { try { return localStorage.getItem('mlhl_name_'+id); } catch(e){ return null; } })();
+
+  // If not yet joined, show name input first
   if(!pid){
     if(!open){ showClosed("Round's closed","You just missed the window — wait for the next draw."); return; }
+
+    // Show name entry screen and wait for submission
+    playerName = await new Promise(resolve => {
+      document.body.innerHTML = `
+        <div class="name-screen">
+          <div class="eyebrow">Mega Luck · Group Draw</div>
+          <h2>What's your name?</h2>
+          <p>Enter your name before the draw closes</p>
+          <input class="name-input" id="nameInput" type="text" maxlength="30"
+            placeholder="Your name" autocomplete="off" autocorrect="off" spellcheck="false">
+          <button class="btn" id="nameBtn" style="width:100%;max-width:300px">Join the draw</button>
+        </div>`;
+      const inp = document.getElementById('nameInput');
+      const btn = document.getElementById('nameBtn');
+      inp.focus();
+      function submit(){
+        const v = inp.value.trim();
+        if(!v) { inp.style.borderColor='var(--magenta)'; inp.focus(); return; }
+        btn.disabled = true; btn.textContent = 'Joining…';
+        resolve(v);
+      }
+      btn.addEventListener('click', submit);
+      inp.addEventListener('keydown', e => { if(e.key==='Enter') submit(); });
+    });
+
     const pRef = push(child(roomRef,'players'));
     pid = pRef.key;
-    await set(pRef,{joinedAt:serverTimestamp(),token:mint()});
+    await set(pRef,{joinedAt:serverTimestamp(),token:mint(),name:playerName});
     try { localStorage.setItem('mlhl_pid_'+id,pid); } catch(e){}
+    try { localStorage.setItem('mlhl_name_'+id,playerName); } catch(e){}
   }
   const ME = pid;
 
@@ -409,7 +453,7 @@ async function initPlayer(id){
 
   /* ── coin ── */
   const coinEl=document.getElementById('coin');
-  const COIN_R=15, REST={x:190,y:413};
+  const COIN_R=22, REST={x:190,y:413};
   const coin={x:REST.x,y:REST.y,tx:REST.x,ty:REST.y,rot:-18};
   function drawCoin(){ coinEl.style.transform=`translate(${coin.x-COIN_R}px,${coin.y-COIN_R}px) rotate(${coin.rot}deg)`; }
   drawCoin();
@@ -488,7 +532,8 @@ async function initPlayer(id){
     coin.tx=REST.x;coin.ty=REST.y;coin.rot=-18;wake();
     // nameplate
     const npEl=document.getElementById('nameplate'); npEl.innerHTML='';
-    ['—','\u2665','No. '+token,'\u2665','20 Jun 2026'].forEach(t=>{
+    const displayName=playerName||'Player';
+    [displayName,'\u2665','No. '+token,'\u2665','20 Jun 2026'].forEach(t=>{
       const s=document.createElement(t==='\u2665'?'span':'b');
       if(t==='\u2665')s.className='hrt'; s.textContent=t; npEl.append(s);
     });
@@ -526,7 +571,7 @@ async function initPlayer(id){
   }
 
   /* ── scratching ── */
-  const BRUSH=CELL_W*0.16;
+  const BRUSH=CELL_W*0.30;  // bigger scrub radius
   let gridRect=null,cardRect=null;
   function cacheRects(){ gridRect=gridEl.getBoundingClientRect();cardRect=cardEl.getBoundingClientRect(); }
   function cellAt(x,y){
@@ -543,8 +588,15 @@ async function initPlayer(id){
     if(!scratchEnabled) return;
     const h=cellAt(x,y); if(!h||h.c.done) return;
     const{c,lx,ly}=h;
+    // soft feathered scratch: radial gradient so edges fade rather than hard cut
+    const r=BRUSH*RATIO;
+    const grd=c.ctx.createRadialGradient(lx*RATIO,ly*RATIO,0,lx*RATIO,ly*RATIO,r);
+    grd.addColorStop(0,'rgba(0,0,0,1)');
+    grd.addColorStop(0.55,'rgba(0,0,0,0.9)');
+    grd.addColorStop(1,'rgba(0,0,0,0)');
     c.ctx.globalCompositeOperation='destination-out';
-    c.ctx.beginPath();c.ctx.arc(lx*RATIO,ly*RATIO,BRUSH*RATIO,0,Math.PI*2);c.ctx.fill();
+    c.ctx.fillStyle=grd;
+    c.ctx.beginPath();c.ctx.arc(lx*RATIO,ly*RATIO,r,0,Math.PI*2);c.ctx.fill();
     c.dirty=true;
     if(!REDUCED&&Math.random()<0.22){
       const b=cellBox(c);flake(b.x+lx+rnd(-3,3),b.y+ly+rnd(-3,3),rnd(-.55,.55),rnd(-1.0,-.1),false);
