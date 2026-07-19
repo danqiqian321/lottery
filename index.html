@@ -72,15 +72,16 @@ h1{font-family:"Snell Roundhand","Brush Script MT","Segoe Script",cursive;
 .nameplate b{font-weight:400;}.nameplate .hrt{font-size:11px;opacity:.85;}
 .tgrid{position:absolute;display:grid;grid-template-columns:repeat(5,1fr);
   grid-template-rows:repeat(4,1fr);touch-action:none;}
-.cell{position:relative;border-radius:8px;overflow:hidden;background:#f0e8f5;}
+.cell{position:relative;border-radius:0;overflow:visible;background:transparent;}
 .under{position:absolute;inset:0;padding:2px;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:1px;background:#f0e8f5;
-  box-shadow:inset 0 0 0 1px rgba(150,80,120,.08);}
+  align-items:center;justify-content:center;gap:1px;background:transparent;}
+.under-bg{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;}
 .gly{font-family:"PingFang SC","Hiragino Sans GB","Noto Sans CJK SC","Microsoft YaHei",serif;
   font-size:27px;line-height:1;color:#111111;text-shadow:0 1px 0 rgba(255,255,255,.3);}
 .cap{display:none;}
 .foil{position:absolute;inset:0;width:100%;height:100%;display:block;}
 .cell.done .foil{display:none;}
+.cell svg.clip-def{position:absolute;width:0;height:0;}
 .flakes{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
 .sweep{position:absolute;inset:0;pointer-events:none;opacity:0;
   background:linear-gradient(105deg,transparent 38%,rgba(255,255,255,.75) 50%,transparent 62%);
@@ -515,8 +516,20 @@ async function initPlayer(id){
   }
 
   /* ── foil paint ── */
+  // cushion clip path for canvas (mirrors CSS SVG version, scaled by RATIO)
+  function applyCushionClip(ctx,w,h){
+    const ix=w*0.18,iy=h*0.18,cx=w/2,cy=h/2;
+    ctx.beginPath();
+    ctx.moveTo(0,0);
+    ctx.quadraticCurveTo(cx,iy,w,0);
+    ctx.quadraticCurveTo(w-ix,cy,w,h);
+    ctx.quadraticCurveTo(cx,h-iy,0,h);
+    ctx.quadraticCurveTo(ix,cy,0,0);
+    ctx.closePath();ctx.clip();
+  }
   function paintFoil(ctx,w,h){
     ctx.globalCompositeOperation='source-over'; ctx.clearRect(0,0,w,h);
+    ctx.save(); applyCushionClip(ctx,w,h);
     const g=ctx.createLinearGradient(0,0,w,h);
     g.addColorStop(0,'#d81a8e');g.addColorStop(.42,'#c3007a');
     g.addColorStop(.58,'#b00069');g.addColorStop(1,'#cd0b83');
@@ -530,6 +543,7 @@ async function initPlayer(id){
     ctx.putImageData(img,0,0);
     ctx.strokeStyle='rgba(255,255,255,.18)';ctx.lineWidth=RATIO;
     ctx.strokeRect(RATIO/2,RATIO/2,w-RATIO,h-RATIO);
+    ctx.restore();
   }
 
   /* ── symbols ── */
@@ -552,8 +566,19 @@ async function initPlayer(id){
 
   /* ── cells ── */
   const cells=[];
+  // cushion shape: quadratic bezier per side, curving inward ~22%
+  function cushionPath(w,h){
+    const ix=w*0.18, iy=h*0.18, cx=w/2, cy=h/2;
+    return `M 0 0 Q ${cx} ${iy} ${w} 0 Q ${w-ix} ${cy} ${w} ${h} Q ${cx} ${h-iy} 0 ${h} Q ${ix} ${cy} 0 0 Z`;
+  }
   for(let i=0;i<TOTAL;i++){
     const el=document.createElement('div');el.className='cell';
+    // SVG cushion background — drawn at render time once cell size is known
+    const bgSvg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    bgSvg.setAttribute('class','under-bg');bgSvg.setAttribute('preserveAspectRatio','none');
+    const bgPath=document.createElementNS('http://www.w3.org/2000/svg','path');
+    bgPath.setAttribute('fill','#ede5f4');
+    bgSvg.append(bgPath); el.append(bgSvg);
     const under=document.createElement('div');under.className='under';
     const gly=document.createElement('span');gly.className='gly';
     const cap=document.createElement('span');cap.className='cap';
@@ -561,9 +586,18 @@ async function initPlayer(id){
     const cv=document.createElement('canvas');cv.className='foil';
     cv.width=Math.round(CELL_W*RATIO);cv.height=Math.round(CELL_H*RATIO);
     el.append(under,cv);gridEl.append(el);
-    cells.push({el,under,gly,cap,cv,ctx:cv.getContext('2d',{willReadFrequently:true}),
+    cells.push({el,under,gly,cap,cv,bgSvg,bgPath,ctx:cv.getContext('2d',{willReadFrequently:true}),
       done:false,dirty:false,sym:null,n:i,col:i%COLS,row:(i/COLS)|0});
   }
+  // set cushion paths once layout is settled
+  requestAnimationFrame(()=>{
+    cells.forEach(c=>{
+      const r=c.el.getBoundingClientRect();
+      const w=r.width,h=r.height;
+      c.bgSvg.setAttribute('viewBox',`0 0 ${w} ${h}`);
+      c.bgPath.setAttribute('d',cushionPath(w,h));
+    });
+  });
   function cellBox(c){ return{x:WELL.x+PAD+c.col*(CELL_W+GAP),y:WELL.y+PAD+c.row*(CELL_H+GAP)}; }
 
   /* ── deal the ticket (called once we know win/lose) ── */
