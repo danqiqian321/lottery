@@ -7,44 +7,67 @@
 <title>Mega Luck · Group Draw</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
-/* ── LOBBY / HOST UI ─────────────────────────────────────────── */
 :root{
   --magenta:#c3007a;--acid:#c0c456;--olive:#6f6a1c;
   --gold:#e5a783;--well:#d7a1c1;--ink:#1a1016;--card:#241019;
+  --purple:#c084fc;--ink2:#0d0b0f;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{background:var(--ink);color:#f4e9ef;overscroll-behavior:none;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;}
-.lobby{min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:18px;padding:28px 16px;-webkit-user-select:none;user-select:none;}
-.eyebrow{font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--gold);font-weight:700}
-h1{font-family:"Snell Roundhand","Brush Script MT","Segoe Script",cursive;
-  font-weight:400;font-size:clamp(28px,7vw,52px);color:var(--acid);line-height:1;}
-.sub{color:var(--well);font-size:14px;text-align:center;max-width:34ch;line-height:1.5}
-.panel{background:var(--card);border:1px solid rgba(215,161,193,.16);border-radius:16px;
-  padding:22px;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;
-  width:100%;max-width:420px;}
-.host-grid{display:grid;grid-template-columns:1fr;gap:20px;width:100%;max-width:900px;}
-@media(min-width:720px){.host-grid{grid-template-columns:1fr 1fr;}}
+html,body{background:var(--ink2);color:#fff;overscroll-behavior:none;
+  font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;}
+.host-page{min-height:100dvh;display:flex;flex-direction:column;overflow:hidden;}
+.dh-title{width:100%;padding:8px 16px 0;font-size:clamp(52px,10vw,132px);font-weight:900;
+  line-height:.88;color:var(--purple);letter-spacing:-.02em;
+  text-shadow:0 4px 0 #9333ea,0 10px 0 rgba(147,51,234,.5),0 18px 12px rgba(147,51,234,.25);
+  -webkit-user-select:none;user-select:none;}
+.dh-sub{font-size:clamp(12px,1.3vw,14px);color:rgba(255,255,255,.65);
+  text-align:center;padding:10px 24px 14px;max-width:680px;margin:0 auto;line-height:1.5;}
+.dh-sub b{color:#fff;}
+.host-cards{flex:1;display:grid;gap:14px;padding:0 16px 14px;
+  grid-template-columns:1fr 1fr 1fr;align-items:stretch;}
+@media(max-width:680px){.host-cards{grid-template-columns:1fr;}}
+.hcard{background:#16101e;border:1px solid rgba(255,255,255,.09);border-radius:18px;
+  padding:26px 20px;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;}
+.hcard-label{font-size:14px;font-weight:700;letter-spacing:.03em;color:#fff;}
 #qr{background:#fff;padding:10px;border-radius:10px;line-height:0;}
 #qr img,#qr canvas{display:block;}
-.count{font-size:60px;font-weight:800;color:var(--acid);line-height:.9;font-variant-numeric:tabular-nums;}
-.count-label{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--well);}
-.timer-big{font-size:clamp(60px,18vw,120px);font-weight:800;color:var(--acid);line-height:.9;
-  font-variant-numeric:tabular-nums;letter-spacing:-2px;}
-.lnk{font-size:10px;color:rgba(215,161,193,.45);word-break:break-all;max-width:32ch;}
+.join-link{font-size:10px;color:rgba(255,255,255,.28);word-break:break-all;max-width:26ch;}
+.host-timer{font-size:clamp(60px,13vw,124px);font-weight:800;color:var(--purple);
+  line-height:.9;font-variant-numeric:tabular-nums;letter-spacing:-3px;}
+.host-pcount{font-size:clamp(68px,15vw,136px);font-weight:800;color:var(--purple);
+  line-height:.9;font-variant-numeric:tabular-nums;}
+.host-pcount-label{font-size:14px;font-weight:600;color:#fff;letter-spacing:.03em;}
+.hbtn{font:700 15px/1 "Helvetica Neue",Helvetica,Arial,sans-serif;
+  letter-spacing:.04em;padding:16px 32px;border-radius:12px;
+  border:1.5px solid #fff;cursor:pointer;width:100%;max-width:260px;
+  background:transparent;color:#fff;transition:all .2s;}
+.hbtn:hover{background:rgba(255,255,255,.1);}
+.hbtn.reveal-ready{background:#4ade80;border-color:#4ade80;color:#000;}
+.hbtn.reveal-ready:hover{background:#22c55e;}
+.hbtn.reveal-waiting{background:#1e1228;border-color:#2d1a3e;color:#5a4a6a;cursor:not-allowed;}
+.hbtn.new-round{background:transparent;border-color:rgba(255,255,255,.25);
+  color:rgba(255,255,255,.5);font-size:13px;}
+.winner-reveal{font-size:clamp(22px,4.5vw,42px);font-weight:800;color:var(--purple);line-height:1.1;}
+.ticker-wrap{overflow:hidden;white-space:nowrap;padding:10px 0;
+  border-top:1px solid rgba(255,255,255,.06);background:#0d0b0f;flex-shrink:0;}
+.ticker-inner{display:inline-flex;animation:ticker 20s linear infinite;}
+@keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.ticker-item{font-family:"Snell Roundhand","Brush Script MT","Segoe Script",cursive;
+  font-size:clamp(18px,2.5vw,26px);color:var(--purple);padding:0 28px;font-weight:400;}
+.hidden{display:none!important;}
+.sub{color:rgba(255,255,255,.5);font-size:13px;text-align:center;max-width:30ch;line-height:1.5;}
+.eyebrow{font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--gold);font-weight:700}
 .pill{display:inline-flex;align-items:center;gap:7px;padding:7px 14px;border-radius:999px;
   background:rgba(192,196,86,.12);border:1px solid rgba(192,196,86,.3);
   font-size:12px;letter-spacing:.06em;color:var(--acid);}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--acid);animation:pulse 1.4s infinite;}
 @keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
-.winner-msg{font-size:clamp(22px,5vw,38px);font-weight:800;color:var(--acid);text-align:center;line-height:1.1;}
 .btn{font:700 13px/1 "Helvetica Neue",Helvetica,Arial,sans-serif;letter-spacing:.12em;
   text-transform:uppercase;padding:14px 28px;border-radius:10px;border:none;cursor:pointer;
   background:var(--magenta);color:#fff;transition:filter .15s;}
 .btn:hover{filter:brightness(1.15)}.btn:active{filter:brightness(.9)}
 .btn:disabled{background:#4a2438;color:#8a6a7a;cursor:default;filter:none;}
 .btn.ghost{background:transparent;border:1px solid rgba(215,161,193,.3);color:var(--well);}
-.hidden{display:none!important;}
 
 /* ── TICKET SHELL (player view) ──────────────────────────────── */
 .ticket-view{
@@ -110,21 +133,39 @@ h1{font-family:"Snell Roundhand","Brush Script MT","Segoe Script",cursive;
 .ticket-locked .lk-label{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--well);}
 
 /* name entry screen */
-.name-screen{min-height:100dvh;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;gap:16px;padding:32px 24px;background:var(--ink);}
-.name-cd{font-size:clamp(64px,20vw,110px);font-weight:800;color:var(--acid);line-height:.9;
-  font-variant-numeric:tabular-nums;letter-spacing:-2px;}
-.name-cd-label{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--well);margin-top:4px;}
-.name-divider{width:48px;height:1px;background:rgba(215,161,193,.2);margin:8px 0;}
-.name-prompt{color:#f4e9ef;font-size:15px;font-weight:600;text-align:center;}
-.name-sub{color:var(--well);font-size:12px;text-align:center;max-width:26ch;line-height:1.5;margin-top:-6px;}
-.name-input{background:rgba(215,161,193,.08);border:1.5px solid rgba(215,161,193,.3);
-  border-radius:12px;padding:16px 20px;font-size:18px;color:#f4e9ef;outline:none;
-  width:100%;max-width:300px;text-align:center;font-family:inherit;
-  -webkit-user-select:text;user-select:text;}
-.name-input::placeholder{color:rgba(215,161,193,.4);}
-.name-input:focus{border-color:var(--acid);}
-.name-btn-wrap{width:100%;max-width:300px;}
+.client-page{min-height:100dvh;display:flex;flex-direction:column;overflow:hidden;background:#0d0b0f;}
+.client-dh-top{font-size:clamp(72px,22vw,160px);font-weight:900;line-height:.82;color:var(--purple);
+  letter-spacing:-.02em;padding:0 12px;overflow:hidden;height:clamp(60px,18vw,130px);
+  text-shadow:0 4px 0 #9333ea,0 10px 0 rgba(147,51,234,.4);
+  -webkit-user-select:none;user-select:none;}
+.client-dh-bot{font-size:clamp(72px,22vw,160px);font-weight:900;line-height:.82;color:var(--purple);
+  letter-spacing:-.02em;padding:0 12px;overflow:hidden;height:clamp(60px,18vw,130px);
+  text-align:right;margin-top:auto;
+  text-shadow:0 4px 0 #9333ea,0 10px 0 rgba(147,51,234,.4);
+  -webkit-user-select:none;user-select:none;}
+.client-sub{font-size:13px;color:rgba(255,255,255,.6);padding:10px 20px 0;line-height:1.5;}
+.client-sub b{color:#fff;}
+.client-cards{display:flex;flex-direction:column;gap:12px;padding:14px 16px;flex:1;}
+.ccard{background:#16101e;border:1px solid rgba(255,255,255,.09);border-radius:18px;
+  padding:22px 20px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;}
+.ccard-label{font-size:14px;font-weight:700;color:#fff;letter-spacing:.02em;}
+.client-timer{font-size:clamp(52px,16vw,88px);font-weight:800;color:var(--purple);
+  line-height:.9;font-variant-numeric:tabular-nums;letter-spacing:-2px;}
+.name-input{
+  background:transparent;border:1.5px solid rgba(255,255,255,.2);
+  border-radius:10px;padding:14px 18px;font-size:16px;color:var(--purple);
+  outline:none;width:100%;text-align:center;font-family:inherit;
+  -webkit-user-select:text;user-select:text;transition:border-color .15s;}
+.name-input::placeholder{color:rgba(255,255,255,.25);font-size:14px;}
+.name-input:focus{border-color:#fff;}
+.name-input.has-value{border-color:rgba(255,255,255,.2);color:var(--purple);}
+.access-btn{
+  width:100%;padding:16px;border-radius:12px;font:700 15px/1 "Helvetica Neue",Helvetica,Arial,sans-serif;
+  letter-spacing:.04em;border:none;cursor:not-allowed;transition:all .2s;
+  background:#2a1f35;color:rgba(255,255,255,.3);}
+.access-btn.active{background:#fff;color:#000;cursor:pointer;}
+.access-btn.active:hover{background:rgba(255,255,255,.9);}
+
 
 /* waiting screen (lobby) */
 .waiting{position:absolute;inset:0;z-index:10;display:flex;flex-direction:column;
@@ -199,46 +240,50 @@ async function initHost(){
   const id = roomRef.key;
   await set(roomRef,{status:'lobby',startAt:null,drawAt:null,winnerId:null,createdAt:serverTimestamp()});
   const joinUrl = location.origin + location.pathname + '?room=' + id;
+  const tItems = Array(10).fill('Double Happiness').map(t=>`<span class="ticker-item">${t}</span>`).join('');
 
   document.body.innerHTML = `
-  <div class="lobby">
-    <div class="host-grid">
-      <div class="panel">
-        <div class="eyebrow">Mega Luck · Host</div>
-        <h1>Scan to play</h1>
+  <div class="host-page">
+    <div class="dh-title">DoubleHappiness</div>
+    <p class="dh-sub"><b>Double Happiness</b> is a lottery experience designed to bring livestream viewers and in-person crowds together in a shared moment.</p>
+    <div class="host-cards">
+      <div class="hcard">
+        <div class="hcard-label">Scan To Join</div>
         <div id="qr"></div>
-        <div class="lnk">${joinUrl}</div>
-        <div><span class="count" id="pcount">0</span><div class="count-label">in the room</div></div>
-        <div id="host-action"></div>
-        <button class="btn ghost" onclick="window.open('${joinUrl}','_blank')" style="font-size:10px;padding:9px 16px">
-          + Open tab to join (test)
-        </button>
+        <div class="join-link">${joinUrl}</div>
+        <button class="hbtn" onclick="window.open('${joinUrl}','_blank')">Join By Browser</button>
       </div>
-      <div class="panel">
-        <div class="eyebrow" id="phase-label">Waiting for players</div>
-        <div id="host-stage"></div>
+      <div class="hcard">
+        <div class="hcard-label" id="cd-label">Tickets Close In</div>
+        <div class="host-timer" id="host-timer">0:30</div>
+        <button class="hbtn" id="main-btn">Start</button>
+      </div>
+      <div class="hcard">
+        <div class="host-pcount" id="pcount">0</div>
+        <div class="host-pcount-label">In The Room</div>
       </div>
     </div>
+    <div class="ticker-wrap"><div class="ticker-inner">${tItems}${tItems}</div></div>
   </div>`;
 
-  new QRCode(document.getElementById('qr'),{text:joinUrl,width:200,height:200,colorDark:'#1a1016',colorLight:'#fff'});
-  const pcount   = document.getElementById('pcount');
-  const phaseEl  = document.getElementById('phase-label');
-  const stageEl  = document.getElementById('host-stage');
-  const actionEl = document.getElementById('host-action');
+  new QRCode(document.getElementById('qr'),{text:joinUrl,width:180,height:180,colorDark:'#0d0b0f',colorLight:'#fff'});
+  const pcountEl  = document.getElementById('pcount');
+  const timerEl   = document.getElementById('host-timer');
+  const cdLabelEl = document.getElementById('cd-label');
+  const mainBtn   = document.getElementById('main-btn');
+  let room=null, ordered=[], drawTried=false, loop=null, revealed=false;
 
-  let room=null, ordered=[], drawTried=false, loop=null;
-
-  const startBtn = document.createElement('button');
-  startBtn.className='btn'; startBtn.textContent='Start 30s draw';
-  startBtn.onclick = ()=>{ const n=serverNow(); update(roomRef,{status:'counting',startAt:n,drawAt:n+WINDOW_MS}); };
-  actionEl.append(startBtn);
+  mainBtn.onclick = ()=>{
+    if(room&&room.status==='lobby'){
+      const n=serverNow();
+      update(roomRef,{status:'counting',startAt:n,drawAt:n+WINDOW_MS});
+    }
+  };
 
   onValue(child(roomRef,'players'), snap=>{
-    const pl = snap.val()||{};
-    ordered = Object.entries(pl).sort((a,b)=>(a[1].joinedAt||0)-(b[1].joinedAt||0)).map(([k])=>k);
-    pcount.textContent = ordered.length;
-    // start button always enabled — host decides when to begin
+    const pl=snap.val()||{};
+    ordered=Object.entries(pl).sort((a,b)=>(a[1].joinedAt||0)-(b[1].joinedAt||0)).map(([k])=>k);
+    pcountEl.textContent=ordered.length;
   });
 
   onValue(roomRef, snap=>{ room=snap.val(); renderHost(); });
@@ -246,57 +291,57 @@ async function initHost(){
   function renderHost(){
     if(!room) return;
     if(room.status==='lobby'){
-      phaseEl.textContent='Waiting for players';
-      stageEl.innerHTML=`<p class="sub">When your group is ready, hit start.</p>`;
-      startBtn.classList.remove('hidden');
+      cdLabelEl.textContent='Tickets Close In';
+      timerEl.textContent='0:30';
+      mainBtn.className='hbtn';
+      mainBtn.textContent='Start';
+      mainBtn.disabled=false;
     }
     if(room.status==='counting'){
-      startBtn.classList.add('hidden');
-      phaseEl.textContent='Draw closes in';
-      if(!stageEl.querySelector('.timer-big'))
-        stageEl.innerHTML=`<div class="timer-big" id="ht">0:30</div>
-          <p class="sub" style="margin-top:8px">Latecomers can't join once this hits zero.</p>`;
+      mainBtn.className='hbtn reveal-waiting';
+      mainBtn.textContent='Reveal Winner';
+      mainBtn.disabled=true;
       if(!loop) loop=setInterval(tickHost,200);
     }
-    if(room.status==='drawn'){
+    if(room.status==='drawn'&&!revealed){
       if(loop){clearInterval(loop);loop=null;}
-      phaseEl.textContent='Cards unlocked';
-      stageEl.innerHTML=`<div class="winner-msg" style="font-size:clamp(18px,4vw,28px);color:var(--well)">Everyone scratch now</div>
-        <p class="sub" style="margin-top:8px">${ordered.length} player${ordered.length===1?'':'s'} · winner hidden until you reveal</p>`;
-      actionEl.innerHTML='';
-      const revBtn=document.createElement('button');
-      revBtn.className='btn';revBtn.textContent='Reveal winner';
-      revBtn.onclick=()=>{
+      timerEl.textContent='0:00';
+      cdLabelEl.textContent='Tickets Closed';
+      mainBtn.className='hbtn reveal-ready';
+      mainBtn.textContent='Reveal Winner';
+      mainBtn.disabled=false;
+      mainBtn.onclick=()=>{
+        if(revealed) return; revealed=true;
         const idx=ordered.indexOf(room.winnerId);
         const wSnap=room.players&&room.players[room.winnerId];
         const wName=wSnap&&wSnap.name?wSnap.name:`Player #${idx+1}`;
-        const who=room.winnerId==='NONE'||idx<0?'No one joined in time':`${wName} wins 🎉`;
-        stageEl.innerHTML=`<div class="winner-msg">${who}</div>`;
-        actionEl.innerHTML='';
-        const nb=document.createElement('button');
-        nb.className='btn ghost';nb.textContent='New round';nb.onclick=()=>location.reload();
-        actionEl.append(nb);
+        const who=room.winnerId==='NONE'||idx<0?'No one joined in time':wName+' wins \uD83C\uDF89';
+        cdLabelEl.textContent='Winner';
+        timerEl.style.display='none';
+        timerEl.insertAdjacentHTML('afterend',`<div class="winner-reveal">${who}</div>`);
+        mainBtn.className='hbtn new-round';
+        mainBtn.textContent='New Round';
+        mainBtn.onclick=()=>location.reload();
       };
-      actionEl.append(revBtn);
     }
   }
 
   function tickHost(){
     if(!room||!room.drawAt) return;
-    const left = Math.max(0, room.drawAt - serverNow());
-    const t = document.getElementById('ht'); if(t) t.textContent=fmt(left);
-    if(left<=0 && !drawTried && room.status==='counting'){ drawTried=true; doDrawWinner(); }
+    const left=Math.max(0,room.drawAt-serverNow());
+    timerEl.textContent=fmt(left);
+    if(left<=0&&!drawTried&&room.status==='counting'){drawTried=true;doDrawWinner();}
   }
 
   function doDrawWinner(){
     runTransaction(roomRef, r=>{
       if(!r||r.status!=='counting'||r.winnerId) return r;
-      const pl = r.players ? Object.keys(r.players) : [];
+      const pl=r.players?Object.keys(r.players):[];
       if(pl.length){
         pl.sort((a,b)=>(r.players[a].joinedAt||0)-(r.players[b].joinedAt||0));
-        // PLACEHOLDER: 3rd to join wins. Swap for real random:
-        // r.winnerId = pl[Math.floor(Math.random()*pl.length)];
-        r.winnerId = pl[Math.min(2, pl.length-1)];
+        // PLACEHOLDER: swap next line for real random draw:
+        // r.winnerId=pl[Math.floor(Math.random()*pl.length)];
+        r.winnerId=pl[Math.min(2,pl.length-1)];
       } else { r.winnerId='NONE'; }
       r.status='drawn';
       return r;
@@ -304,9 +349,7 @@ async function initHost(){
   }
 }
 
-/* ════════════════════════════════════════════════════════
-   PLAYER — full original ticket, unlock on draw
-════════════════════════════════════════════════════════ */
+
 async function initPlayer(id){
   const roomRef = ref(db,'rooms/'+id);
   const snap = await get(roomRef);
@@ -322,60 +365,69 @@ async function initPlayer(id){
   if(!pid){
     if(!open){ showClosed("Round's closed","You just missed the window — wait for the next draw."); return; }
 
-    // Show name entry screen — countdown prominent, name below
+    // Show name entry screen — matching new design
     playerName = await new Promise(resolve => {
       document.body.innerHTML = `
-        <div class="name-screen">
-          <div class="eyebrow">Mega Luck · Group Draw</div>
-          <div class="name-cd" id="nameCd">—</div>
-          <div class="name-cd-label" id="nameCdLabel">Waiting for host</div>
-          <div class="name-divider"></div>
-          <div class="name-prompt">Enter your name to access your ticket</div>
-          <div class="name-sub">You need a name to scratch — enter it now while you wait</div>
-          <input class="name-input" id="nameInput" type="text" maxlength="30"
-            placeholder="Your name" autocomplete="off" autocorrect="off" spellcheck="false">
-          <div class="name-btn-wrap">
-            <button class="btn" id="nameBtn" style="width:100%;opacity:.4;cursor:not-allowed" disabled>Enter your name first</button>
+        <div class="client-page">
+          <div class="client-dh-top">Double</div>
+          <p class="client-sub"><b>Double Happiness</b> is a lottery experience designed to bring livestream viewers and in-person crowds together in a shared moment.</p>
+          <div class="client-cards">
+            <div class="ccard">
+              <div class="ccard-label" id="cdLabel">Tickets Close In</div>
+              <div class="client-timer" id="nameCd">—</div>
+            </div>
+            <div class="ccard">
+              <div class="ccard-label">Your Name</div>
+              <input class="name-input" id="nameInput" type="text" maxlength="30"
+                placeholder="Type In Your Name" autocomplete="off" autocorrect="off" spellcheck="false">
+            </div>
           </div>
+          <div style="padding:0 16px 16px">
+            <button class="access-btn" id="nameBtn" disabled>Access Your Ticket</button>
+          </div>
+          <div class="client-dh-bot">Happiness</div>
         </div>`;
 
-      const inp  = document.getElementById('nameInput');
-      const btn  = document.getElementById('nameBtn');
-      const cdEl = document.getElementById('nameCd');
-      const lblEl = document.getElementById('nameCdLabel');
+      const inp   = document.getElementById('nameInput');
+      const btn   = document.getElementById('nameBtn');
+      const cdEl  = document.getElementById('nameCd');
+      const lblEl = document.getElementById('cdLabel');
       inp.focus();
 
-      // Enable/disable button based on name input
+      // button + input border state
       function syncBtn(){
+        const typing  = document.activeElement === inp;
         const hasName = inp.value.trim().length > 0;
+        // border: white while focused, grey otherwise
+        inp.classList.toggle('has-value', hasName && !typing);
+        // button: active once any text entered
         btn.disabled = !hasName;
-        btn.style.opacity = hasName ? '1' : '.4';
-        btn.style.cursor  = hasName ? 'pointer' : 'not-allowed';
-        btn.textContent   = hasName ? 'Get my ticket' : 'Enter your name first';
+        btn.classList.toggle('active', hasName);
       }
-      inp.addEventListener('input', syncBtn);
+      inp.addEventListener('input',  syncBtn);
+      inp.addEventListener('focus',  ()=>{ inp.style.borderColor='#fff'; });
+      inp.addEventListener('blur',   ()=>{ inp.style.borderColor = inp.value.trim() ? 'rgba(255,255,255,.2)' : 'rgba(255,255,255,.2)'; });
 
-      // Live countdown synced to Firebase
+      // Live countdown
       let cdLoop = null;
-      const unsub = onValue(roomRef, snap => {
+      onValue(roomRef, snap => {
         const r = snap.val(); if(!r) return;
         if(r.status === 'lobby'){
           cdEl.textContent = '—';
-          lblEl.textContent = 'Waiting for host to start';
+          lblEl.textContent = 'Tickets Close In';
           if(cdLoop){ clearInterval(cdLoop); cdLoop=null; }
         } else if(r.status === 'counting' && r.drawAt){
           if(!cdLoop){
             cdLoop = setInterval(()=>{
               const left = Math.max(0, r.drawAt - serverNow());
               cdEl.textContent = fmt(left);
-              lblEl.textContent = left > 0 ? 'Draw closes in' : 'Draw closed';
+              lblEl.textContent = left > 0 ? 'Tickets Close In' : 'Tickets Closed';
               if(left <= 0){
                 clearInterval(cdLoop); cdLoop=null;
-                cdEl.style.color = 'var(--well)';
-                // if they still haven't typed a name, tell them they can still submit
+                cdEl.style.color = 'rgba(192,132,252,.5)';
                 if(!inp.value.trim()){
                   inp.placeholder = 'Last chance — enter your name';
-                  inp.style.borderColor = 'var(--acid)';
+                  inp.style.borderColor = '#fff';
                   inp.focus();
                 }
               }
@@ -394,6 +446,7 @@ async function initPlayer(id){
       btn.addEventListener('click', submit);
       inp.addEventListener('keydown', e => { if(e.key==='Enter' && !btn.disabled) submit(); });
     });
+
 
     const pRef = push(child(roomRef,'players'));
     pid = pRef.key;
