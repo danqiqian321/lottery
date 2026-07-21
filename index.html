@@ -18,7 +18,7 @@
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{background:#1A1016;color:#fff;overscroll-behavior:none;
   font-family:Inter,"Helvetica Neue",Helvetica,Arial,sans-serif;}
-.host-page{min-height:100dvh;display:flex;flex-direction:column;overflow:hidden;}
+.host-page{min-height:100dvh;display:flex;flex-direction:column;overflow:hidden;justify-content:space-between;}
 .dh-title{width:100%;padding:8px 16px 0;font-size:clamp(52px,10vw,132px);font-weight:900;
   line-height:.88;color:var(--purple);letter-spacing:-.02em;
   text-shadow:0 4px 0 #9333ea,0 10px 0 rgba(147,51,234,.5),0 18px 12px rgba(147,51,234,.25);
@@ -26,19 +26,20 @@ html,body{background:#1A1016;color:#fff;overscroll-behavior:none;
 .dh-sub{font-size:18px;font-family:Inter,sans-serif;color:rgba(255,255,255,.65);
   text-align:center;padding:10px 15vw 14px;white-space:nowrap;margin:0 auto;line-height:1.5;overflow:hidden;text-overflow:ellipsis;}
 .dh-sub b{color:#fff;}
-.host-cards{flex:1;display:grid;gap:16px;padding:0 15vw 20px;
-  grid-template-columns:1fr 1fr 1fr;align-items:stretch;}
-@media(max-width:680px){.host-cards{grid-template-columns:1fr;padding:0 16px 16px;}}
+.host-cards{display:grid;gap:16px;padding:20px 15vw 24px;
+  grid-template-columns:1fr 1fr 1fr;align-items:stretch;
+  max-height:70vh;}
+@media(max-width:680px){.host-cards{grid-template-columns:1fr;padding:16px 16px 16px;max-height:none;}}
 .hcard{background:#16101e59;border:1px solid rgba(255,255,255,.09);border-radius:18px;
-  padding:32px 24px;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;gap:16px;text-align:center;}
+  padding:32px 28px;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:30px;text-align:center;}
 .hcard-label{font-size:24px;font-weight:700;letter-spacing:.01em;color:#fff;}
 #qr{background:#fff;padding:10px;border-radius:10px;line-height:0;}
 #qr img,#qr canvas{display:block;}
 .join-link{font-size:10px;color:rgba(255,255,255,.28);word-break:break-all;max-width:26ch;}
-.host-timer{font-size:clamp(60px,13vw,124px);font-weight:800;color:var(--purple);
-  line-height:.9;font-variant-numeric:tabular-nums;letter-spacing:-3px;}
-.host-pcount{font-size:clamp(68px,15vw,136px);font-weight:800;color:var(--purple);
+.host-timer{font-size:160px;font-weight:600;color:var(--purple);
+  line-height:.9;font-variant-numeric:tabular-nums;letter-spacing:-4px;}
+.host-pcount{font-size:160px;font-weight:600;color:var(--purple);
   line-height:.9;font-variant-numeric:tabular-nums;}
 .host-pcount-label{font-size:14px;font-weight:600;color:#fff;letter-spacing:.03em;}
 .hbtn{font:700 20px/1 Inter,sans-serif;
@@ -268,7 +269,7 @@ async function initHost(){
     <div class="ticker-wrap"><div class="ticker-inner">${tItems.repeat(6)}${tItems.repeat(6)}</div></div>
   </div>`;
 
-  new QRCode(document.getElementById('qr'),{text:joinUrl,width:180,height:180,colorDark:'#0d0b0f',colorLight:'#fff'});
+  new QRCode(document.getElementById('qr'),{text:joinUrl,width:216,height:216,colorDark:'#0d0b0f',colorLight:'#fff'});
   const pcountEl  = document.getElementById('pcount');
   const timerEl   = document.getElementById('host-timer');
   const cdLabelEl = document.getElementById('cd-label');
