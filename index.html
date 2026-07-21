@@ -35,8 +35,10 @@ html,body{background:#1A1016;color:#fff;overscroll-behavior:none;
 @media(max-width:680px){.host-cards{grid-template-columns:1fr;padding:16px 16px 16px;max-height:none;}}
 .hcard{background:#16101e59;border:1px solid rgba(255,255,255,.09);border-radius:18px;
   padding:32px 28px;display:flex;flex-direction:column;align-items:center;
-  justify-content:flex-start;gap:30px;text-align:center;}
-.hcard--countdown{gap:20px;}
+  justify-content:flex-start;gap:0;text-align:center;}
+.hcard-body{flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:24px;width:100%;padding-top:20px;}
+.hcard--countdown .hcard-body{gap:20px;}
 .hcard-label{font-size:24px;font-weight:700;letter-spacing:.01em;color:#fff;}
 #qr{background:#fff;padding:10px;border-radius:10px;line-height:0;}
 #qr img,#qr canvas{display:block;}
@@ -51,6 +53,8 @@ html,body{background:#1A1016;color:#fff;overscroll-behavior:none;
   border:1.5px solid #fff;cursor:pointer;width:100%;max-width:280px;
   background:#fff;color:#1A1016;transition:all .2s;}
 .hbtn:hover{background:rgba(255,255,255,.88);}
+.hbtn--secondary{background:transparent;color:#fff;border:1.5px solid #fff;}
+.hbtn--secondary:hover{background:rgba(255,255,255,.1);}
 .hbtn.reveal-ready{background:#4ade80;border-color:#4ade80;color:#000;}
 .hbtn.reveal-ready:hover{background:#22c55e;}
 .hbtn.reveal-waiting{background:#1e1228;border-color:#2d1a3e;color:#5a4a6a;cursor:not-allowed;}
@@ -257,17 +261,23 @@ async function initHost(){
     <div class="host-cards">
       <div class="hcard">
         <div class="hcard-label">Scan To Join</div>
-        <div id="qr"></div>
-        <button class="hbtn" onclick="window.open('${joinUrl}','_blank')">Join By Browser</button>
+        <div class="hcard-body">
+          <div id="qr"></div>
+          <button class="hbtn hbtn--secondary" onclick="window.open('${joinUrl}','_blank')">Join By Browser</button>
+        </div>
       </div>
       <div class="hcard hcard--countdown">
         <div class="hcard-label" id="cd-label">Tickets Close In</div>
-        <div class="host-timer" id="host-timer">0:30</div>
-        <button class="hbtn" id="main-btn">Start</button>
+        <div class="hcard-body">
+          <div class="host-timer" id="host-timer">0:30</div>
+          <button class="hbtn" id="main-btn">Start</button>
+        </div>
       </div>
       <div class="hcard">
-        <div class="host-pcount" id="pcount">0</div>
-        <div class="host-pcount-label">In The Room</div>
+        <div class="hcard-label">In The Room</div>
+        <div class="hcard-body">
+          <div class="host-pcount" id="pcount">0</div>
+        </div>
       </div>
     </div>
     <div class="ticker-wrap"><div class="ticker-inner">${tItems.repeat(6)}${tItems.repeat(6)}</div></div>
