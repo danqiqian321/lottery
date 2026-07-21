@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#1a1016">
 <title>Mega Luck · Group Draw</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 :root{
@@ -14,7 +17,7 @@
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{background:var(--ink2);color:#fff;overscroll-behavior:none;
-  font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;}
+  font-family:Inter,"Helvetica Neue",Helvetica,Arial,sans-serif;}
 .host-page{min-height:100dvh;display:flex;flex-direction:column;overflow:hidden;}
 .dh-title{width:100%;padding:8px 16px 0;font-size:clamp(52px,10vw,132px);font-weight:900;
   line-height:.88;color:var(--purple);letter-spacing:-.02em;
@@ -23,12 +26,13 @@ html,body{background:var(--ink2);color:#fff;overscroll-behavior:none;
 .dh-sub{font-size:clamp(12px,1.3vw,14px);color:rgba(255,255,255,.65);
   text-align:center;padding:10px 24px 14px;max-width:680px;margin:0 auto;line-height:1.5;}
 .dh-sub b{color:#fff;}
-.host-cards{flex:1;display:grid;gap:14px;padding:0 16px 14px;
+.host-cards{flex:1;display:grid;gap:16px;padding:0 40px 20px;
   grid-template-columns:1fr 1fr 1fr;align-items:stretch;}
-@media(max-width:680px){.host-cards{grid-template-columns:1fr;}}
+@media(max-width:680px){.host-cards{grid-template-columns:1fr;padding:0 16px 16px;}}
 .hcard{background:#16101e;border:1px solid rgba(255,255,255,.09);border-radius:18px;
-  padding:26px 20px;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;}
-.hcard-label{font-size:14px;font-weight:700;letter-spacing:.03em;color:#fff;}
+  padding:32px 24px;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:16px;text-align:center;}
+.hcard-label{font-size:24px;font-weight:700;letter-spacing:.01em;color:#fff;}
 #qr{background:#fff;padding:10px;border-radius:10px;line-height:0;}
 #qr img,#qr canvas{display:block;}
 .join-link{font-size:10px;color:rgba(255,255,255,.28);word-break:break-all;max-width:26ch;}
@@ -37,9 +41,9 @@ html,body{background:var(--ink2);color:#fff;overscroll-behavior:none;
 .host-pcount{font-size:clamp(68px,15vw,136px);font-weight:800;color:var(--purple);
   line-height:.9;font-variant-numeric:tabular-nums;}
 .host-pcount-label{font-size:14px;font-weight:600;color:#fff;letter-spacing:.03em;}
-.hbtn{font:700 15px/1 "Helvetica Neue",Helvetica,Arial,sans-serif;
-  letter-spacing:.04em;padding:16px 32px;border-radius:12px;
-  border:1.5px solid #fff;cursor:pointer;width:100%;max-width:260px;
+.hbtn{font:700 20px/1 Inter,sans-serif;
+  letter-spacing:.01em;padding:16px 32px;border-radius:12px;
+  border:1.5px solid #fff;cursor:pointer;width:100%;max-width:280px;
   background:transparent;color:#fff;transition:all .2s;}
 .hbtn:hover{background:rgba(255,255,255,.1);}
 .hbtn.reveal-ready{background:#4ade80;border-color:#4ade80;color:#000;}
@@ -48,10 +52,10 @@ html,body{background:var(--ink2);color:#fff;overscroll-behavior:none;
 .hbtn.new-round{background:transparent;border-color:rgba(255,255,255,.25);
   color:rgba(255,255,255,.5);font-size:13px;}
 .winner-reveal{font-size:clamp(22px,4.5vw,42px);font-weight:800;color:var(--purple);line-height:1.1;}
-.ticker-wrap{overflow:hidden;padding:8px 0;
-  border-top:1px solid rgba(255,255,255,.06);background:#0d0b0f;flex-shrink:0;}
-.ticker-inner{display:flex;align-items:center;gap:40px;
-  width:max-content;animation:ticker 20s linear infinite;}
+.ticker-wrap{overflow:hidden;padding:10px 0;
+  background:#7c3aed;flex-shrink:0;}
+.ticker-inner{display:flex;align-items:center;gap:48px;
+  width:max-content;animation:ticker 22s linear infinite;}
 @keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 .hidden{display:none!important;}
 .sub{color:rgba(255,255,255,.5);font-size:13px;text-align:center;max-width:30ch;line-height:1.5;}
@@ -249,7 +253,6 @@ async function initHost(){
       <div class="hcard">
         <div class="hcard-label">Scan To Join</div>
         <div id="qr"></div>
-        <div class="join-link">${joinUrl}</div>
         <button class="hbtn" onclick="window.open('${joinUrl}','_blank')">Join By Browser</button>
       </div>
       <div class="hcard">
@@ -262,7 +265,7 @@ async function initHost(){
         <div class="host-pcount-label">In The Room</div>
       </div>
     </div>
-    <div class="ticker-wrap"><div class="ticker-inner">${tItems}${tItems}</div></div>
+    <div class="ticker-wrap"><div class="ticker-inner">${tItems.repeat(6)}${tItems.repeat(6)}</div></div>
   </div>`;
 
   new QRCode(document.getElementById('qr'),{text:joinUrl,width:180,height:180,colorDark:'#0d0b0f',colorLight:'#fff'});
