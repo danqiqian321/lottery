@@ -33,20 +33,21 @@ html,body{background:#1A1016;color:#fff;overscroll-behavior:none;
 .hcard{background:#16101e59;border:1px solid rgba(255,255,255,.09);border-radius:18px;
   padding:32px 28px;display:flex;flex-direction:column;align-items:center;
   justify-content:center;gap:30px;text-align:center;}
+.hcard--countdown{justify-content:flex-start;padding-top:32px;}
 .hcard-label{font-size:24px;font-weight:700;letter-spacing:.01em;color:#fff;}
 #qr{background:#fff;padding:10px;border-radius:10px;line-height:0;}
 #qr img,#qr canvas{display:block;}
 .join-link{font-size:10px;color:rgba(255,255,255,.28);word-break:break-all;max-width:26ch;}
-.host-timer{font-size:160px;font-weight:600;color:var(--purple);
+.host-timer{font-size:160px;font-weight:600;color:#E098FE;
   line-height:.9;font-variant-numeric:tabular-nums;letter-spacing:-4px;}
-.host-pcount{font-size:160px;font-weight:600;color:var(--purple);
+.host-pcount{font-size:160px;font-weight:600;color:#E098FE;
   line-height:.9;font-variant-numeric:tabular-nums;}
-.host-pcount-label{font-size:14px;font-weight:600;color:#fff;letter-spacing:.03em;}
+.host-pcount-label{font-size:24px;font-weight:700;color:#fff;letter-spacing:.01em;}
 .hbtn{font:700 20px/1 Inter,sans-serif;
   letter-spacing:.01em;padding:16px 32px;border-radius:12px;
   border:1.5px solid #fff;cursor:pointer;width:100%;max-width:280px;
-  background:transparent;color:#fff;transition:all .2s;}
-.hbtn:hover{background:rgba(255,255,255,.1);}
+  background:#fff;color:#1A1016;transition:all .2s;}
+.hbtn:hover{background:rgba(255,255,255,.88);}
 .hbtn.reveal-ready{background:#4ade80;border-color:#4ade80;color:#000;}
 .hbtn.reveal-ready:hover{background:#22c55e;}
 .hbtn.reveal-waiting{background:#1e1228;border-color:#2d1a3e;color:#5a4a6a;cursor:not-allowed;}
@@ -54,7 +55,7 @@ html,body{background:#1A1016;color:#fff;overscroll-behavior:none;
   color:rgba(255,255,255,.5);font-size:13px;}
 .winner-reveal{font-size:clamp(22px,4.5vw,42px);font-weight:800;color:var(--purple);line-height:1.1;}
 .ticker-wrap{overflow:hidden;padding:4px 0;
-  background:#7c3aed;flex-shrink:0;}
+  background:#E098FE;flex-shrink:0;}
 .ticker-inner{display:flex;align-items:center;gap:32px;
   width:max-content;animation:ticker 22s linear infinite;}
 @keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
@@ -256,7 +257,7 @@ async function initHost(){
         <div id="qr"></div>
         <button class="hbtn" onclick="window.open('${joinUrl}','_blank')">Join By Browser</button>
       </div>
-      <div class="hcard">
+      <div class="hcard hcard--countdown">
         <div class="hcard-label" id="cd-label">Tickets Close In</div>
         <div class="host-timer" id="host-timer">0:30</div>
         <button class="hbtn" id="main-btn">Start</button>
