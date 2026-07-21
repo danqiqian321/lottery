@@ -37,8 +37,10 @@ html,body{background:#1A1016;color:#fff;overscroll-behavior:none;
   padding:32px 28px;display:flex;flex-direction:column;align-items:center;
   justify-content:flex-start;gap:0;text-align:center;}
 .hcard-body{flex:1;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;gap:24px;width:100%;padding-top:20px;}
-.hcard--countdown .hcard-body{gap:20px;}
+  justify-content:space-between;gap:20px;width:100%;padding-top:20px;}
+/* number/QR sits in a shared centered zone; button pins to bottom */
+.hcard-figure{flex:1;display:flex;align-items:center;justify-content:center;width:100%;}
+.hcard-action{width:100%;display:flex;justify-content:center;}
 .hcard-label{font-size:24px;font-weight:700;letter-spacing:.01em;color:#fff;}
 #qr{background:#fff;padding:10px;border-radius:10px;line-height:0;}
 #qr img,#qr canvas{display:block;}
@@ -256,21 +258,21 @@ async function initHost(){
       <div class="hcard">
         <div class="hcard-label">Scan To Join</div>
         <div class="hcard-body">
-          <div id="qr"></div>
-          <button class="hbtn hbtn--secondary" onclick="window.open('${joinUrl}','_blank')">Join By Browser</button>
+          <div class="hcard-figure"><div id="qr"></div></div>
+          <div class="hcard-action"><button class="hbtn hbtn--secondary" onclick="window.open('${joinUrl}','_blank')">Join By Browser</button></div>
         </div>
       </div>
       <div class="hcard hcard--countdown">
         <div class="hcard-label" id="cd-label">Tickets Close In</div>
         <div class="hcard-body">
-          <div class="host-timer" id="host-timer">0:30</div>
-          <button class="hbtn" id="main-btn">Start</button>
+          <div class="hcard-figure"><div class="host-timer" id="host-timer">0:30</div></div>
+          <div class="hcard-action"><button class="hbtn" id="main-btn">Start</button></div>
         </div>
       </div>
       <div class="hcard">
         <div class="hcard-label">In The Room</div>
         <div class="hcard-body">
-          <div class="host-pcount" id="pcount">0</div>
+          <div class="hcard-figure"><div class="host-pcount" id="pcount">0</div></div>
         </div>
       </div>
     </div>
