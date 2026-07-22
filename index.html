@@ -336,6 +336,14 @@ async function initHost(){
       if(loop){clearInterval(loop);loop=null;}
       timerEl.textContent='0:00';
       cdLabelEl.textContent='Tickets Closed';
+      // Reveal stays locked until the winner has actually scratched their ticket
+      const winnerHasScratched = room.winnerScratched === true || room.winnerId === 'NONE';
+      if(!winnerHasScratched){
+        mainBtn.className='hbtn reveal-waiting';
+        mainBtn.textContent='Waiting for winner…';
+        mainBtn.disabled=true;
+        return;
+      }
       mainBtn.className='hbtn reveal-ready';
       mainBtn.textContent='Reveal Winner';
       mainBtn.disabled=false;
@@ -348,7 +356,7 @@ async function initHost(){
         cdLabelEl.textContent='Winner';
         timerEl.style.display='none';
         timerEl.insertAdjacentHTML('afterend',`<div class="winner-reveal">${who}</div>`);
-        mainBtn.className='hbtn new-round';
+        mainBtn.className='hbtn hbtn--secondary';
         mainBtn.textContent='New Round';
         mainBtn.onclick=()=>location.reload();
       };
@@ -381,6 +389,7 @@ async function initHost(){
 
 async function initPlayer(id){
   const roomRef = ref(db,'rooms/'+id);
+  window.__roomRef = roomRef;
   const snap = await get(roomRef);
   if(!snap.exists()){ showClosed("Room not found","Ask the host for a fresh QR."); return; }
   const first = snap.val();
@@ -692,6 +701,8 @@ async function initPlayer(id){
       // every cell revealed AND enough hits — show win
       statusEl.textContent='Grand prize unlocked';statusEl.classList.add('result');
       cardEl.classList.add('win');
+      // tell the host the winner has scratched — unlocks the Reveal button
+      if(iWon && window.__roomRef){ try{ update(window.__roomRef,{winnerScratched:true}); }catch(e){} }
       const np=document.getElementById('nameplate');np.innerHTML='';
       ['\u2665','WINNER','\u2665','Player','\u2665','WINNER','\u2665'].forEach(t=>{
         const s=document.createElement(t==='\u2665'?'span':'b');if(t==='\u2665')s.className='hrt';
