@@ -376,9 +376,8 @@ async function initHost(){
       const pl=r.players?Object.keys(r.players):[];
       if(pl.length){
         pl.sort((a,b)=>(r.players[a].joinedAt||0)-(r.players[b].joinedAt||0));
-        // PLACEHOLDER: swap next line for real random draw:
-        // r.winnerId=pl[Math.floor(Math.random()*pl.length)];
-        r.winnerId=pl[Math.min(2,pl.length-1)];
+        // Real random draw — every player has an equal chance.
+        r.winnerId=pl[Math.floor(Math.random()*pl.length)];
       } else { r.winnerId='NONE'; }
       r.status='drawn';
       return r;
