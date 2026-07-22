@@ -172,6 +172,21 @@ html,body{background:#1A1016;color:#fff;overscroll-behavior:none;
   background:#2a1f35;color:rgba(255,255,255,.3);}
 .access-btn.active{background:#fff;color:#000;cursor:pointer;}
 .access-btn.active:hover{background:rgba(255,255,255,.9);}
+/* polished name input */
+.name-input{
+  width:100%;box-sizing:border-box;
+  background:rgba(255,255,255,.03);
+  border:1.5px solid rgba(255,255,255,.18);
+  border-radius:10px;
+  padding:15px 20px;
+  font:600 18px/1 Inter,"Helvetica Neue",sans-serif;
+  color:#E098FE;text-align:center;letter-spacing:.01em;
+  outline:none;transition:border-color .18s,background .18s;
+  -webkit-user-select:text;user-select:text;
+}
+.name-input::placeholder{color:rgba(255,255,255,.28);font-weight:400;}
+.name-input:focus{border-color:#fff;background:rgba(255,255,255,.06);}
+.name-input.has-value{border-color:rgba(255,255,255,.18);}
 
 
 /* waiting screen (lobby) */
